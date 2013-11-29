@@ -10,7 +10,20 @@
 
 	public function __construct() {
        print "In FDF constructor\n";
-  }
+     }
+
+     public function xml2array ( $xmlObject, $out = array () )
+      {
+        foreach ( (array) $xmlObject as $index => $node )
+            $out[$index] = ( is_object ( $node ) ) ? xml2array ( $node ) : $node;
+
+        return $out;
+      }
+
+    public function object2array($object)
+    {
+        return json_decode(json_encode((array) $object), TRUE); 
+    }
 
 	public function createFDF($file,$info){
 

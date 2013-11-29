@@ -836,12 +836,13 @@ class QuickBase {
 			$xml_packet = new SimpleXMLElement('<qdbapi></qdbapi>');
 			$xml_packet->addChild('rid',$rid);
 			$xml_packet->addChild('ticket',$this->ticket);
+			$xml_packet->addChild('apptoken', $this->app_token);
 			$xml_packet = $xml_packet->asXML();
 
 			$response = $this->transmit($xml_packet, 'API_GetRecordInfo');
 		}
 		else {
-			$url_string = $this->qb_ssl . $this->db_id. "?act=API_GetRecordInfo&ticket=". $this->ticket
+			$url_string = $this->qb_ssl . $this->db_id. "?act=API_GetRecordInfo&apptoken=". $this->app_token
 					."&rid=".$rid;
 
 			$response = $this->transmit($url_string);
