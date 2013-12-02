@@ -1,5 +1,7 @@
 <?php
    
+  include_once 'config/authenticate.php';
+
   function __autoload($name) {
 
    	 	include 'classes/'.$name . '.php';
@@ -8,7 +10,6 @@
 
 	try {
 
-    define("APPTOKEN", "dy2hfu5csthvumdccc2uuc5qnuja");
 
     //get url 
     $appToken = htmlspecialchars($_GET['apptoken']);
@@ -36,9 +37,7 @@
      $file = './enrol-form-4.php';
       
      //connect to quickbase and pull info down
-     //$quick  = new Quickbase();
-     $quickBaseID = 'bigmp2r7u';
-     $q = new Quickbase('dev@incling.com.au', '5bztVEf4NjkLMk', true, $quickBaseID, 'dy2hfu5csthvumdccc2uuc5qnuja', 'sae');
+     $q = new Quickbase(USRNAME, PASSWRD, true, QUICKBASEID, APPTOKEN, URLINST);
      $result = $q->get_record_info($recordID);
      //print_r($result);
   
@@ -46,14 +45,50 @@
     //$app = simplexml_load_file($result);
     echo '<h1>Results Array</h1>';
     for($i = 0, $j = count($result); $i < $j ; $i++){
-        $keysArray[] = (string)$result->field[$i]->name;
-        if ( (string)$result->field[$i]->type == 'Date' || (string)$result->field[$i]->type == 'Date / Time'){
-          //TODO sample for date of birth here and split the string
-          $valuesArray[] = (string)$result->field[$i]->printable;
-        } else {
+
+        if( (string)$result->field[$i]->name == 'Campus' ) {
+          if( (string)$result->field[$i]->value == 'Byron Bay'){
+            $keysArray[] = 'Byron Bay';
+            $valuesArray[] = 'X';  
+          }
+          if( (string)$result->field[$i]->value == 'Brisbane'){
+            $keysArray[] = 'Brisbane';
+            $valuesArray[] = 'X';  
+          }
+          if( (string)$result->field[$i]->value == 'Sydney'){
+            $keysArray[] = 'Sydney';
+            $valuesArray[] = 'X';  
+          }
+          if( (string)$result->field[$i]->value == 'Melbourne'){
+            $keysArray[] = 'Melbourne';
+            $valuesArray[] = 'X';  
+          }
+          if( (string)$result->field[$i]->value == 'Adelaide'){
+            $keysArray[] = 'Adelaide';
+            $valuesArray[] = 'X';  
+          }
+          if( (string)$result->field[$i]->value == 'Perth'){
+            $keysArray[] = 'Online';
+            $valuesArray[] = 'X';  
+          }
+          
+        } 
+        elseif ( (string)$result->field[$i]->type == 'Date' || (string)$result->field[$i]->type == 'Date / Time'){
+            $valuesArray[] = (string)$result->field[$i]->printable;
+        }
+
+        // if ( (string)$result->field[$i]->type == 'Date' || (string)$result->field[$i]->type == 'Date / Time'){
+        // //   //TODO sample for date of birth here and split the string
+        //     $valuesArray[] = (string)$result->field[$i]->printable;
+        // } 
+        else {
+          //default functionality
+          $keysArray[] = (string)$result->field[$i]->name;
           $valuesArray[] = (string)$result->field[$i]->value;
         } 
     }
+    
+
     
 
     $masterArray = array_combine($keysArray, $valuesArray);
