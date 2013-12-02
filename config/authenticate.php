@@ -6,4 +6,6 @@
   define("QUICKBASEID","bigmp2r7u");
   define("URLINST", "sae");
 
+  define("MASTERFORM", "master-enrol-form.pdf");
+
 ?>

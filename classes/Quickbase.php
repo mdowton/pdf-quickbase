@@ -504,6 +504,63 @@ class QuickBase {
 		return false;
 	}
 
+	public function upload_file($rid, $fields, $uploads = 0){
+
+		if($this->xml) {
+			$xml_packet = new SimpleXMLElement('<qdbapi></qdbapi>');
+			$xml_packet->addChild('rid',$rid);
+
+			$i = intval(0);
+			foreach($fields as $field) {
+				$safe_value = preg_replace('/&(?!\w+;)/', '&', $field['value']);
+
+				$xml_packet->addChild('field',$safe_value);
+				$xml_packet->field[$i]->addAttribute('fid', $field['fid']);
+				$i++;
+			}
+
+			if ($uploads) {
+				echo 'in here upload';
+				foreach ($uploads as $upload) {
+					$xml_packet->addChild('field', $upload['value']);
+					$xml_packet->field[$i]->addAttribute('fid', $upload['fid']);
+					$xml_packet->field[$i]->addAttribute('filename',$upload['filename']);
+					$i++;
+				}
+
+			}
+
+			if ($this->app_token)
+				$xml_packet->addChild('apptoken', $this->app_token);
+
+			$xml_packet->addChild('ticket',$this->ticket);
+			$xml_packet = $xml_packet->asXML();	
+			$response = $this->transmit($xml_packet, 'API_UploadFile');
+		}
+		else {
+			$url_string = $this->qb_ssl . $this->db_id. "?act=API_EditRecord&ticket=". $this->ticket
+						."&rid=".$rid;
+
+			foreach ($fields as $field) {
+				$url_string .= "&_fid_" . $field['id'] . "=" . $field['value'];
+			}
+
+			if ($uploads) {
+				foreach ($uploads as $upload) {
+					$xml_packet .= "" . $upload['value'] . "";
+				}
+			}
+			if($updateid) $url_string .= "&update_id=".$updateid;
+
+			$response = $this->transmit($url_string);
+		}
+
+		if($response) {
+			return $response;
+		}
+		return false;
+	}
+
 	/* API_EditRecord: https://www.quickbase.com/up/6mztyxu8/g/rc7/en/va/QuickBaseAPI.htm#_Toc126580003 */
 	public function edit_record($rid, $fields, $uploads = 0, $updateid = 0) {
 		if($this->xml) {
@@ -520,12 +577,14 @@ class QuickBase {
 			}
 
 			if ($uploads) {
+				echo 'in here upload';
 				foreach ($uploads as $upload) {
 					$xml_packet->addChild('field', $upload['value']);
 					$xml_packet->field[$i]->addAttribute('fid', $upload['fid']);
 					$xml_packet->field[$i]->addAttribute('filename',$upload['filename']);
 					$i++;
 				}
+
 			}
 
 			if ($this->app_token)
@@ -533,7 +592,6 @@ class QuickBase {
 
 			$xml_packet->addChild('ticket',$this->ticket);
 			$xml_packet = $xml_packet->asXML();	
-
 			$response = $this->transmit($xml_packet, 'API_EditRecord');
 		}
 		else {
@@ -555,7 +613,7 @@ class QuickBase {
 		}
 
 		if($response) {
-			return $response->update_id;
+			return $response;
 		}
 		return false;
 	}
