@@ -5,7 +5,6 @@
   function __autoload($name) {
 
    	 	include 'classes/'.$name . '.php';
-    	//throw new Exception("Unable to load $name.");
 	}
 
 	try {
@@ -14,50 +13,44 @@
     //get url 
     $appToken = htmlspecialchars($_GET['apptoken']);
     $recordID = htmlspecialchars($_GET['rid']);
+    
     //match defined token with url token
-    if(APPTOKEN != $appToken){
+    if(APPTOKEN != $appToken || empty($recordID)){
         echo 'Error not valid application token';
         die();
     } else {
       
-      $info = array(
-     	'Title' 				=> 'Mr',
-     	'First Name' 		=> 'Mark',
-     	'Last Name'				=> 'Dowton',
-     	'Email'		=> 'mark@11atoms.com',
-     	'Previous Name' => 'Clint Eastwood',
-      'Male'          => 'Yes',
-      'Date of Birth' => '20-09-76'
-     	);
-
+     
+     
      //$info = array(); 
      $keysArray = array();
      $valuesArray = array();
      
-     //$file = './master-enrol-form.pdf';
-      
+       
      //connect to quickbase and pull info down
      $q = new Quickbase(USRNAME, PASSWRD, true, QUICKBASEID, APPTOKEN, URLINST);
      $result = $q->get_record_info($recordID);
-     //print_r($result);
-  
+     
     
     //create a file name to save pdf to First Name - Last Name 
-    $fileOut = "enrol_form_";
+    $fileOut = "Enrol_Form_";
+
      for($i = 0, $j = count($result); $i < $j ; $i++) {
       
       if( (string)$result->field[$i]->name == 'First Name' || (string)$result->field[$i]->name == 'Last Name'){
-        $fileOut .= (string)$result->field[$i]->value;
+        $fileOut .= preg_replace('/\s+/', '',(string)$result->field[$i]->value);
       }
      }
+     //append record ID as well to be safe
+    $fileOut .= $recordID;
     $fileOut .= '.pdf';
 
     //$app = simplexml_load_file($result);
-    echo '<h1>Procesing Document...</h1>';
+    //echo '<h1>Procesing Document...</h1>';
     for($i = 0, $j = count($result); $i < $j ; $i++){
          //campus rule
         if( (string)$result->field[$i]->name == 'Campus' ) {
-          echo "Executing campus rule set...<br />";
+          //echo "Executing campus rule set...<br />";
           if( (string)$result->field[$i]->value == 'Byron Bay'){
             $keysArray[] = 'Byron Bay';
             $valuesArray[] = 'X';  
@@ -86,7 +79,7 @@
         } 
         //date rules
         elseif ( (string)$result->field[$i]->type == 'Date' || (string)$result->field[$i]->type == 'Date / Time'){
-            echo "Executing Date rule set...<br/>";
+            //echo "Executing Date rule set...<br/>";
             if ( (string)$result->field[$i]->name == 'Date of Birth'){
               $dateString = explode("-",(string)$result->field[$i]->printable);
               $keysArray[] = 'dob-day';
@@ -102,25 +95,25 @@
 
         //higest eduaction rules
         elseif ( (string)$result->field[$i]->name == 'Highest Education') {
-          echo "Executing highest education rule set...</br />";
+          //echo "Executing highest education rule set...</br />";
           
-          if( (string)$result->field[$i]->value == 'Still completing secondary school'){
-            $keysArray[] = 'Still completing secondary school';
+          if( (string)$result->field[$i]->value == 'Did not complete Year 10 schooling or equivalent'){
+            $keysArray[] = 'NotY10';
             $valuesArray[] = 'X';  
           }          
-          if( (string)$result->field[$i]->value == 'Year 12/Senior high school certificate'){
+          if( (string)$result->field[$i]->value == 'Completed Year 10 schooling or equivalent'){
+            $keysArray[] = 'Y10';
+            $valuesArray[] = 'X';  
+          } 
+          if( (string)$result->field[$i]->value == 'Did not complete Year 12 schooling or equivalent'){
+            $keysArray[] = 'NotY12';
+            $valuesArray[] = 'X';  
+          } 
+          if( (string)$result->field[$i]->value == 'Completed Year 12 schooling or equivalent'){
             $keysArray[] = 'Y12';
             $valuesArray[] = 'X';  
-          } 
-          if( (string)$result->field[$i]->value == 'Certificate I/II/III/IV'){
-            $keysArray[] = 'Other';
-            $valuesArray[] = 'X';  
-          } 
-          if( (string)$result->field[$i]->value == 'Diploma or Associate Diploma'){
-            $keysArray[] = 'Other';
-            $valuesArray[] = 'X';  
           }
-          if( (string)$result->field[$i]->value == 'Advanced Diploma or Associate Degree'){
+          if( (string)$result->field[$i]->value == 'Other post school qualification (e.g. Certificate or Diploma)'){
             $keysArray[] = 'Other';
             $valuesArray[] = 'X';  
           }
@@ -132,12 +125,9 @@
             $keysArray[] = 'Post grad';
             $valuesArray[] = 'X';  
           }
-          if( (string)$result->field[$i]->value == 'Did not complete senior high school certificate'){
-            $keysArray[] = 'Did not complete senior high school certificate';
-            $valuesArray[] = 'X';  
-          }
-          if( (string)$result->field[$i]->value == 'Other qualification or work experience'){
-            $keysArray[] = 'Other qualification or work experience';
+          
+          if( (string)$result->field[$i]->value == 'Don\'t know'){
+            $keysArray[] = 'Know';
             $valuesArray[] = 'X';  
           }
 
@@ -166,9 +156,9 @@
 
     $masterArray = array_combine($keysArray, $valuesArray);
     
-    echo '<pre>';
-    print_r($masterArray);
-    echo '<pre>';
+    //echo '<pre>';
+    ///print_r($masterArray);
+    //echo '<pre>';
     
     
 
@@ -181,11 +171,17 @@
 	 fclose($fp);
 
 
-
+   if ( SS_ENVIRONMENT_TYPE == 'dev' ) {
+      exec('/usr/local/bin/pdftk '.MASTERFORM.' fill_form file.fdf output '.$fileOut.' ',$output, $return);
+   } else{
+      exec('/usr/bin/pdftk '.MASTERFORM.' fill_form file.fdf output '.$fileOut.' ',$output, $return);
+   }
 	 //execute pdftk server to merge data
-		exec('/usr/local/bin/pdftk '.MASTERFORM.' fill_form file.fdf output '.$fileOut.' ',$output, $return);
-		 if ($return != 0) echo 'error executing pdftk...shell command';
-		//exit;
+		
+		 if ($return != 0) {
+        echo 'error executing pdftk...shell command file did not convert';
+        die();
+     } 
 
      //encode file and send back to server attchment
     $data = file_get_contents($fileOut);
@@ -198,13 +194,12 @@
 
 
     $uploadResult = $q->upload_file($recordID, NULL,$fileUpdate);
-    print_r($uploadResult);
-		echo 'process complete';
+    //print_r($uploadResult);
+		echo '<h2>Process Complete</h2><p>Document attached in quickbase. Refresh page to see file.</p>';
 
 	  } //end else
 	} catch (Exception $e) {
     echo $e->getMessage(), "\n";
 	}
 
-   //include 'classes/FDF.php';
 ?>

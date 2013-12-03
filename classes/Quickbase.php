@@ -520,7 +520,6 @@ class QuickBase {
 			}
 
 			if ($uploads) {
-				echo 'in here upload';
 				foreach ($uploads as $upload) {
 					$xml_packet->addChild('field', $upload['value']);
 					$xml_packet->field[$i]->addAttribute('fid', $upload['fid']);
@@ -577,7 +576,6 @@ class QuickBase {
 			}
 
 			if ($uploads) {
-				echo 'in here upload';
 				foreach ($uploads as $upload) {
 					$xml_packet->addChild('field', $upload['value']);
 					$xml_packet->field[$i]->addAttribute('fid', $upload['fid']);

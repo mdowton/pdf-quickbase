@@ -1,6 +1,10 @@
 <?php 
  /*** error reporting on ***/
- error_reporting(E_ALL);
+ if ( SS_ENVIRONMENT_TYPE == 'dev' ) {
+ 		error_reporting(E_ALL);
+ 	} else {
+		error_reporting(0);
+	}
 
  /*** define the site path constant ***/
  $site_path = realpath(dirname(__FILE__));

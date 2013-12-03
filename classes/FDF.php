@@ -9,7 +9,7 @@
 	private $vars = array();
 
 	public function __construct() {
-       print "In FDF constructor\n";
+       //print "In FDF constructor\n";
      }
 
      public function xml2array ( $xmlObject, $out = array () )
@@ -32,7 +32,7 @@
     foreach($info as $field => $val){
 
         if(is_array($val)){
-        	echo 'true';
+        	//echo 'true';
 
             $data.='<</T('.$field.')/V[';
 
