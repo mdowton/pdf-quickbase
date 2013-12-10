@@ -25,13 +25,20 @@
      //$info = array(); 
      $keysArray = array();
      $valuesArray = array();
+
+     //months array
+     $months = array( '01' => 'Jan', '02' => 'Feb', '03' => 'Mar', '04' => 'Apr',
+                 '05' => 'May',     '06' => 'Jun',     '07' => 'Jul',  '08' => 'Aug',
+                 '09' => 'Sep', '10' => 'Oct', '11' => 'Nov',
+                 '12' => 'Dec');
      
        
      //connect to quickbase and pull info down
      $q = new Quickbase(USRNAME, PASSWRD, true, QUICKBASEID, APPTOKEN, URLINST);
      $result = $q->get_record_info($recordID);
-     
-    
+    // echo '<pre>'; 
+    // print_r($result);
+    // echo '</pre>';
     //create a file name to save pdf to First Name - Last Name 
     $fileOut = "Enrol_Form_";
 
@@ -92,7 +99,45 @@
             //$keysArray[] = (string)$result->field[$i]->name;
             //$valuesArray[] = (string)$result->field[$i]->printable;
         }
+        //rule for email split
+        elseif ( (string)$result->field[$i]->name == 'Email'){
+            $email = (string)$result->field[$i]->value; 
+            if ( strlen($email) > 19 ){
+              $pos = 19;
+              $str1 = substr($email, 0, $pos);
+              $str2 = substr($email, $pos);
+              $keysArray[] = 'Email';
+              $valuesArray[] = $str1;
+              $keysArray[] = 'Email-2';
+              $valuesArray[] = $str2;
+            }
+              else {
+                $keysArray[] = 'Email';
+                $valuesArray[] = (string)$result->field[$i]->value;
+              }
+        }
+        //rule for intake split
+        elseif ( (string)$result->field[$i]->name == 'Intake' ){
+          if ( (string)$result->field[$i]->value == '(Select one)'){
+            $keysArray[] = 'Intake-year';
+            $valuesArray[] = '';
+            $keysArray[] = 'Intake-month';
+            $valuesArray[] = '';
 
+          } else {
+            $intakeMonth = explode(" ", (string)$result->field[$i]->value);
+            $monthNumber = array_search($intakeMonth[0], $months);
+            // print_r($monthNumber);
+            // echo '</br>';
+            // echo $intakeMonth[1];
+            $keysArray[] = 'Intake-year';
+            $valuesArray[] = $intakeMonth[1];
+            $keysArray[] = 'Intake-month';
+            $valuesArray[] = $monthNumber;
+          }
+            
+        }
+        
         //higest eduaction rules
         elseif ( (string)$result->field[$i]->name == 'Highest Education') {
           //echo "Executing highest education rule set...</br />";
@@ -172,9 +217,9 @@
 
 
    if ( SS_ENVIRONMENT_TYPE == 'dev' ) {
-      exec('/usr/local/bin/pdftk '.MASTERFORM.' fill_form file.fdf output '.$fileOut.' ',$output, $return);
+      exec('/usr/local/bin/pdftk '.MASTERFORM.' fill_form file.fdf output '.$fileOut.' flatten ',$output, $return);
    } else{
-      exec('/usr/bin/pdftk '.MASTERFORM.' fill_form file.fdf output '.$fileOut.' ',$output, $return);
+      exec('/usr/bin/pdftk '.MASTERFORM.' fill_form file.fdf output '.$fileOut.' flatten ',$output, $return);
    }
 	 //execute pdftk server to merge data
 		
