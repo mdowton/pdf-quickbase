@@ -25,6 +25,8 @@
      //$info = array(); 
      $keysArray = array();
      $valuesArray = array();
+     $streetString = "";
+
 
      //months array
      $months = array( '01' => 'Jan', '02' => 'Feb', '03' => 'Mar', '04' => 'Apr',
@@ -39,6 +41,7 @@
     // echo '<pre>'; 
     // print_r($result);
     // echo '</pre>';
+
     //create a file name to save pdf to First Name - Last Name 
     $fileOut = "Enrol_Form_";
 
@@ -55,6 +58,7 @@
     //$app = simplexml_load_file($result);
     //echo '<h1>Procesing Document...</h1>';
     for($i = 0, $j = count($result); $i < $j ; $i++){
+         
          //campus rule
         if( (string)$result->field[$i]->name == 'Campus' ) {
           //echo "Executing campus rule set...<br />";
@@ -124,7 +128,9 @@
             $keysArray[] = 'Intake-month';
             $valuesArray[] = '';
 
-          } else {
+          }
+
+          else {
             $intakeMonth = explode(" ", (string)$result->field[$i]->value);
             $monthNumber = array_search($intakeMonth[0], $months);
             // print_r($monthNumber);
@@ -137,6 +143,49 @@
           }
             
         }
+        elseif ( (string)$result->field[$i]->name == 'Street Address 1') {
+            
+            //allow for case where street address 1 and 2 are filled combine into one array
+
+            $address = (string)$result->field[$i]->value;
+            
+            if ( strlen($address)  > 19 ){
+              
+              $pos = 19;
+              $str1 = substr($address, 0, $pos);
+              $str2 = substr($address, $pos);
+              $keysArray[] = 'Street Address 1';
+              $valuesArray[] = $str1;
+              $keysArray[] = 'Street Address 2';
+              //write this one to a string
+              //$valuesArray[] = $str2;
+              $streetString .= $str2;
+              
+            } else {
+                $keysArray[] = 'Street Address 1';
+                $valuesArray[] = (string)$result->field[$i]->value;
+                
+              }
+          }
+          //rule for street address 2
+          elseif ( (string)$result->field[$i]->name == 'Street Address 2') {
+                    
+             $address_2 = (string)$result->field[$i]->value;
+           
+             if( in_array('Street Address 2', $keysArray)){
+               //apend value in same place
+               //add a space
+                $streetString .= " ";
+                $streetString .= $address_2;
+                $valuesArray[] = $streetString;
+             }  else {
+              //doesnt exists in array
+              $keysArray[] = 'Street Address 2';
+              $valuesArray[] = (string)$result->field[$i]->value;
+
+             }
+
+          }
         
         //higest eduaction rules
         elseif ( (string)$result->field[$i]->name == 'Highest Education') {
